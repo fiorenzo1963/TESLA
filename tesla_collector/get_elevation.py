@@ -27,6 +27,9 @@ class Elevation(object):
         self.last_latitude = 0.0
         self.last_longitude = 0.0
         self.last_elevation = 0.0
+        self.calls = 0
+        self.hits = 0
+        self.misses = 0
 
     def __get(self, latitude, longitude, headers={}):
         """Raw urlopen command"""
@@ -44,14 +47,20 @@ class Elevation(object):
         return json.loads(resp.read().decode(charset))
 
     def get(self, latitude, longitude, in_feet):
+        self.calls += 1
         try:
             if latitude != self.last_latitude or longitude != self.last_longitude:
+                self.misses += 1
                 #print("get_elevation: no cache hit")
                 self.last_latitude = latitude
                 self.last_longitude = longitude
                 e = self.__get(latitude, longitude)
                 self.last_elevation = e['elevations'][0]['elevation']
                 #print("get_elevation: caching result: " + str(self.last_elevation))
+            else:
+                self.hits += 1
+            if self.calls % 100 == 0:
+                print("get_elevation: stats: calls = " + str(self.calls) + ", hits = " + str(self.hits) + ", misses = " + str(self.misses))
             if in_feet:
                 return int(self.last_elevation / 0.3408)
             else:
