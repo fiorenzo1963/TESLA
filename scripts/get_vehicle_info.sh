@@ -17,8 +17,14 @@ case "$1" in
 "vehicle_config")
 	cmd="data_request/vehicle_config"
 	;;
+"gui_settings")
+	cmd="data_request/gui_settings"
+	;;
+"climate_state")
+	cmd="data_request/climate_state"
+	;;
 *)
-	echo $0: usage: $0: 'data|charge|drive|vehicle_state|vehicle_config'
+	echo $0: usage: $0: 'data|charge|drive|vehicle_state|vehicle_config|gui_settings|climate_state'
 	exit 1
 	;;
 esac

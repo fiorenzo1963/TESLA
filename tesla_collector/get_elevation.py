@@ -47,6 +47,8 @@ class Elevation(object):
         return json.loads(resp.read().decode(charset))
 
     def get(self, latitude, longitude, in_feet):
+        if (self.calls % 100) == 0:
+            print("get_elevation: stats: calls = " + str(self.calls) + ", hits = " + str(self.hits) + ", misses = " + str(self.misses))
         self.calls += 1
         try:
             if latitude != self.last_latitude or longitude != self.last_longitude:
@@ -59,8 +61,6 @@ class Elevation(object):
                 #print("get_elevation: caching result: " + str(self.last_elevation))
             else:
                 self.hits += 1
-            if self.calls % 100 == 0:
-                print("get_elevation: stats: calls = " + str(self.calls) + ", hits = " + str(self.hits) + ", misses = " + str(self.misses))
             if in_feet:
                 return int(self.last_elevation / 0.3408)
             else:
