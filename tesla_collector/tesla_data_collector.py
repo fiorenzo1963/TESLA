@@ -13,7 +13,15 @@ tesla_info = {
     "api": "/api/1/"
 }
 
-access_token = "51be69ce38106bf4204c3837f55bb2ec005be662e1969028fdad35249e032c72"
+access_token="415500ebc694ba1c687ee9c7ec04c0e9f410ad158f80ddb8ce9c7eee68db74d8"
+
+token_info = {
+    "access_token":access_token,
+    "token_type":"bearer",
+    "expires_in":3888000,
+    "refresh_token":"0001eefca23773da96e0faad6f6389380994d9f721e62dd40f495013f109e90c",
+    "created_at":1546933201
+}
 
 STATE_ERROR = -1
 STATE_UNKNOWN = 0
@@ -25,14 +33,35 @@ STATE_USER_PRESENT_NOT_DRIVING = 5
 STATE_USER_NOT_PRESENT_NOT_LOCKED = 6
 STATE_DRIVING = 7
 
+state_names = {
+    STATE_ERROR : "STATE_ERROR",
+    STATE_UNKNOWN : "STATE_UNKNOWN",
+    STATE_NOT_ONLINE : "STATE_NOT_ONLINE",
+    STATE_CHARGING : "STATE_CHARGING",
+    STATE_CHARGING_COMPLETE : "STATE_CHARGING_COMPLETE",
+    STATE_NOT_CHARGING : "STATE_NOT_CHARGING",
+    STATE_USER_PRESENT_NOT_DRIVING : "STATE_USER_PRESENT_NOT_DRIVING",
+    STATE_USER_NOT_PRESENT_NOT_LOCKED : "STATE_USER_NOT_PRESENT_NOT_LOCKED",
+    STATE_DRIVING : "STATE_DRIVING",
+}
+
 SLEEP_STATE_DRIVING = 15
 #SLEEP_STATE_NOT_DRIVING = 30
 SLEEP_STATE_NOT_DRIVING = 15
 
-# sleep this much time to let the car go from online to 'offline' or 'asleep'
+#
+# wait this much time to let the car go from online to 'offline' or 'asleep'
+#
+#WAIT_TO_GO_ASLEEP = (60 * 20)
 WAIT_TO_GO_ASLEEP = (60 * 10)
+#WAIT_TO_GO_ASLEEP = (60 * 5)
 
-# charge_state['charging_state'] = 'Disconnected'|'Starting'|'Charging'|'Complete'
+#
+# timeout to let sleep. sometimes the car does not go 'offline' or 'asleep', if tasks are scheduled or other reasons.
+#
+LET_SLEEP_TIMEOUT = (60 * 5)
+
+# charge_state['charging_state'] = 'NoPower'|'Disconnected'|'Starting'|'Charging'|'Complete'
 # drive_state['shift_state'] = None|'P'|'D'|'R'
 # drive_state['speed'] = None|<speed>
 
@@ -54,66 +83,108 @@ def collect_state(ge, c, v):
     print("collect_state: state = " + str(v['state']))
     print("collect_state: VIN = " + str(v['vin']))
     print("collect_state: display_name = " + str(v['display_name']))
+    charge_state = { }
+    drive_state = { }
+    vehicle_state = { }
+    climate_state = { }
+
+    #
+    # try get charge_state
+    #
     try:
         charge_state = v.data_request('charge_state')
         print("collect_state: charge_state = " + str(charge_state))
+        has_charge_state = True
     except Exception as e:
-        print("collect_state: EXCEPTION -> STATE_ERROR (cannot get charge_state -- ignoring and setting charge_state[charging_state] to Unknown): " + str(e))
-        charge_state = {
-            "charging_state" : "Unknown"
-        }
-        #return STATE_ERROR
+        print("collect_state: EXCEPTION (cannot get charge_state): " + str(e))
+        has_charge_state = False
 
-    state_error = False
+    #
+    # try get drive_state
+    #
     try:
         drive_state = v.data_request('drive_state')
         print("collect_state: drive_state = " + str(drive_state))
+        has_drive_state = True
     except Exception as e:
-        print("collect_state: EXCEPTION -> STATE_ERROR (cannot get drive_state): " + str(e))
-        state_error = True
+        print("collect_state: EXCEPTION (cannot get drive_state): " + str(e))
+        has_drive_state = False
+
+    #
+    # try get vehicle_state
+    #
     try:
         vehicle_state = v.data_request('vehicle_state')
         print("collect_state: vehicle_state = " + str(vehicle_state))
+        has_vehicle_state = True
     except Exception as e:
-        print("collect_state: EXCEPTION -> STATE_ERROR (cannot get vehicle_state): " + str(e))
-        state_error = True
-
+        print("collect_state: EXCEPTION (cannot get vehicle_state): " + str(e))
+        has_vehicle_state = False
 
     #
-    # FIXME: collect partial data
+    # try get climate_state
     #
-    if state_error == True:
+    try:
+        climate_state = v.data_request('climate_state')
+        print("collect_state: climate_state = " + str(climate_state))
+        has_climate_state = True
+    except Exception as e:
+        print("collect_state: EXCEPTION (cannot get climate_state): " + str(e))
+        has_climate_state = False
+
+
+    if not has_charge_state and not has_drive_state and not has_vehicle_state:
+        print("collect_state: cannot retrieve charge_state,drive_state,vehicle_state")
         return STATE_ERROR
 
-    print("collect_state: vehicle_state[odometer] = " + str(vehicle_state['odometer']))
-    print("collect_state: vehicle_state[is_user_present] = " + str(vehicle_state['is_user_present']))
-    print("collect_state: vehicle_state[locked] = " + str(vehicle_state['locked']))
-    print("collect_state: charge_state[charging_state] = " + str(charge_state['charging_state']))
+    if not has_drive_state:
+        print("collect_state: drive_state is needed")
+        return STATE_ERROR
+
+    if has_vehicle_state:
+        print("collect_state: vehicle_state[odometer] = " + str(vehicle_state['odometer']))
+        print("collect_state: vehicle_state[is_user_present] = " + str(vehicle_state['is_user_present']))
+        print("collect_state: vehicle_state[locked] = " + str(vehicle_state['locked']))
+
+    if has_charge_state:
+        print("collect_state: charge_state[charging_state] = " + str(charge_state['charging_state']))
+
+    #
+    # add altitude to drive state
+    #
+    drive_state['altitude'] = ge.get(drive_state['latitude'], drive_state['longitude'], True)
+
     print("collect_state: drive_state[shift_state] = " + str(drive_state['shift_state']))
     print("collect_state: drive_state[speed] = " + str(drive_state['speed']))
     print("collect_state: drive_state[latitude] = " + str(drive_state['latitude']))
     print("collect_state: drive_state[longitude] = " + str(drive_state['longitude']))
-    drive_state['altitude'] = ge.get(drive_state['latitude'], drive_state['longitude'], True)
     print("collect_state: drive_state[altitude] = " + str(drive_state['altitude']))
-    print("collect_state: done, time = " + str(time.ctime()))
+
     #data = v.data();
     #print("collect_state: all_vehicle_data = " + str(data));
     if (drive_state['shift_state'] is None) or (drive_state['speed'] is None):
-        if vehicle_state['is_user_present']:
-            print("collect_state: " + str(v['state']) + " -> STATE_USER_PRESENT_NOT_DRIVING")
-            return STATE_USER_PRESENT_NOT_DRIVING
-        if vehicle_state['locked'] == False:
-            print("collect_state: " + str(v['state']) + " -> STATE_USER_NOT_PRESENT_NOT_LOCKED")
-            return STATE_USER_NOT_PRESENT_NOT_LOCKED
         #
-        # not driving
+        # can only find out about this if has_vehicle_state == True
         #
-        if (charge_state['charging_state'] == 'Starting') or (charge_state['charging_state'] == 'Charging'):
-            print("collect_state: " + str(v['state']) + " -> STATE_CHARGING")
-            return STATE_CHARGING
-        if charge_state['charging_state'] == 'Complete':
-            print("collect_state: " + str(v['state']) + " -> STATE_CHARGING_COMPLETE")
-            return STATE_CHARGING_COMPLETE
+        if has_vehicle_state:
+            if vehicle_state['is_user_present']:
+                print("collect_state: " + str(v['state']) + " -> STATE_USER_PRESENT_NOT_DRIVING")
+                return STATE_USER_PRESENT_NOT_DRIVING
+            if vehicle_state['locked'] == False:
+                print("collect_state: " + str(v['state']) + " -> STATE_USER_NOT_PRESENT_NOT_LOCKED")
+                return STATE_USER_NOT_PRESENT_NOT_LOCKED
+
+        #
+        # can only find out about this if has_charge_state == True
+        #
+        if has_charge_state:
+            if (charge_state['charging_state'] == 'Starting') or (charge_state['charging_state'] == 'Charging'):
+                print("collect_state: " + str(v['state']) + " -> STATE_CHARGING")
+                return STATE_CHARGING
+            if charge_state['charging_state'] == 'Complete':
+                print("collect_state: " + str(v['state']) + " -> STATE_CHARGING_COMPLETE")
+                return STATE_CHARGING_COMPLETE
+
         #
         # unknown / not charging / charging not complete
         #
@@ -145,29 +216,22 @@ def collect_data(ge, let_sleep):
             #
             # online
             #
+            print("collect_data: " + str(v['state']) + " (-> STATE_ONLINE)")
             if let_sleep == True:
-                print("collect_data: letting car go asleep, time = " + str(time.ctime()))
+                print("collect_data: letting car go asleep")
                 print("collect_data: " + str(v['state']) + " -> STATE_NOT_CHARGING")
                 return STATE_NOT_CHARGING
             return collect_state(ge, c, v)
-        #
-        #elif v['state'] == 'offline':
-        #    #
-        #    # offline
-        #    #
-        #    r = collect_state(ge, c, v)
-        #    print("collect_data: done, r = " + str(r) + ", time = " + str(time.ctime()))
-        #    if r == STATE_ERROR:
-        #        print("collect_data: " + str(v['state']) + " (probably WAKING_UP) -> STATE_NOT_ONLINE")
-        #        return STATE_NOT_ONLINE
-        #    else:
-        #        print("collect_data: " + str(v['state']) + " -> r = " + str(r))
-        #        return r
+        elif v['state'] == 'offline':
+            #
+            # offline
+            #
+            print("collect_data: " + str(v['state']) + " -> STATE_NOT_ONLINE")
+            return STATE_NOT_ONLINE
         else:
             #
             # asleep
             #
-            print("collect_data: done, time = " + str(time.ctime()))
             print("collect_data: " + str(v['state']) + " -> STATE_NOT_ONLINE")
             return STATE_NOT_ONLINE
     except Exception as e:
@@ -185,39 +249,48 @@ def main_loop():
     while True:
         print("main_loop(): =======================================================================")
         iteration += 1
-        print("main_loop(): iteration = " + str(iteration) + ", let_sleep = " + str(let_sleep) + ", time = " + str(time.ctime()))
         r = collect_data(ge, let_sleep)
-        print("main_loop(): iteration = " + str(iteration) + ", let_sleep = " + str(let_sleep) + ", time = " + str(time.ctime()) + ", r = " + str(r))
+        print("main_loop(): iteration = " + str(iteration) + ", let_sleep = " + str(let_sleep) + ", time = " + str(time.ctime()) + ", r = " + str(r) + ": " + state_names[r])
         if r == STATE_CHARGING:
-            print("main_loop(): STATE_CHARGING")
+            print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False
         elif (r == STATE_CHARGING_COMPLETE) or (r == STATE_NOT_CHARGING):
-            print("main_loop(): STATE_CHARGING_COMPLETE/STATE_NOT_CHARGING")
+            print("main_loop(): " + state_names[r])
+            #
+            # see if we need to let the vehicle go asleep/offline
+            #
             if not_charging_last_time_timer == 0:
                 not_charging_last_time_timer = int(time.time())
                 print("main_loop: setting not_charging_last_time_timer: " + str(not_charging_last_time_timer))
             timer_elapsed = int(time.time()) - not_charging_last_time_timer
-            print("main_loop: timer_elapsed = " + str(timer_elapsed) + ", WAIT_TO_GO_ASLEEP = " + str(WAIT_TO_GO_ASLEEP))
+            print("main_loop: timer_elapsed = " + str(timer_elapsed) + ", WAIT_TO_GO_ASLEEP = " + str(WAIT_TO_GO_ASLEEP) + ", LET_SLEEP_TIMEOUT = " + str(LET_SLEEP_TIMEOUT))
             if timer_elapsed >= WAIT_TO_GO_ASLEEP:
                 print("main_loop: timer_elapsed exceeded delay " + str(WAIT_TO_GO_ASLEEP) + ", letting car to go asleep")
                 let_sleep = True
             else:
                 let_sleep = False
+            #
+            # if vehicle doesn't go asleep/offline, stop waiting.
+            #
+            if timer_elapsed >= WAIT_TO_GO_ASLEEP + LET_SLEEP_TIMEOUT:
+                print("main_loop: timer_elapsed exceeded delay+timeout " + str(WAIT_TO_GO_ASLEEP) + "+" + str(LET_SLEEP_TIMEOUT) + ", cancelling let_sleep")
+                not_charging_last_time_timer = 0
+                let_sleep = False
         elif (r == STATE_DRIVING) or (r == STATE_USER_PRESENT_NOT_DRIVING):
-            print("main_loop(): STATE_DRIVING/STATE_USER_PRESENT_NOT_DRIVING")
+            print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False
         elif r == STATE_USER_NOT_PRESENT_NOT_LOCKED:
-            print("main_loop(): STATE_USER_NOT_PRESENT_NOT_LOCKED")
+            print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False
         elif r == STATE_NOT_ONLINE:
-            print("main_loop(): STATE_NOT_ONLINE")
+            print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False
         else:
-            print("main_loop(): STATE_UNKNOWN/STATE_ERROR")
+            print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False
         if (r == STATE_DRIVING) or (r == STATE_USER_PRESENT_NOT_DRIVING):

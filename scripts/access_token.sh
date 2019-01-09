@@ -1,5 +1,6 @@
 #!/bin/bash
-#
-# token generated on 2018-12-31 20:09
-#
-access_token='51be69ce38106bf4204c3837f55bb2ec005be662e1969028fdad35249e032c72'
+access_token="415500ebc694ba1c687ee9c7ec04c0e9f410ad158f80ddb8ce9c7eee68db74d8"
+token_type="bearer"
+expires_in=3888000
+refresh_token="0001eefca23773da96e0faad6f6389380994d9f721e62dd40f495013f109e90c"
+created_at=1546933201

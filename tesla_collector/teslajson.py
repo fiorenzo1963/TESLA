@@ -104,7 +104,11 @@ class Connection(object):
         """Set HTTP header"""
         self.access_token = access_token
         self.expiration = expiration
-        self.head = {"Authorization": "Bearer %s" % access_token}
+        self.head = {
+            "Authorization": "Bearer %s" % access_token,
+            "User-Agent": "Tesla/App/Fio/Py/DataLogger/1.0",
+            "X-Tesla-User-Agent": "X-Tesla/Agent/App/Fio"
+        }
     
     def __open(self, url, headers={}, data=None, baseurl=""):
         """Raw urlopen command"""
