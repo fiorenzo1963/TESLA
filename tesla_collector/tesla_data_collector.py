@@ -25,18 +25,20 @@ token_info = {
 
 STATE_ERROR = -1
 STATE_UNKNOWN = 0
-STATE_NOT_ONLINE = 1
-STATE_CHARGING = 2
-STATE_CHARGING_COMPLETE = 3
-STATE_NOT_CHARGING = 4
-STATE_USER_PRESENT_NOT_DRIVING = 5
-STATE_USER_NOT_PRESENT_NOT_LOCKED = 6
-STATE_DRIVING = 7
+STATE_OFFLINE = 1
+STATE_ASLEEP = 2
+STATE_CHARGING = 3
+STATE_CHARGING_COMPLETE = 4
+STATE_NOT_CHARGING = 5
+STATE_USER_PRESENT_NOT_DRIVING = 6
+STATE_USER_NOT_PRESENT_NOT_LOCKED = 7
+STATE_DRIVING = 8
 
 state_names = {
     STATE_ERROR : "STATE_ERROR",
     STATE_UNKNOWN : "STATE_UNKNOWN",
-    STATE_NOT_ONLINE : "STATE_NOT_ONLINE",
+    STATE_OFFLINE : "STATE_OFFLINE",
+    STATE_ASLEEP : "STATE_ASLEEP",
     STATE_CHARGING : "STATE_CHARGING",
     STATE_CHARGING_COMPLETE : "STATE_CHARGING_COMPLETE",
     STATE_NOT_CHARGING : "STATE_NOT_CHARGING",
@@ -226,14 +228,14 @@ def collect_data(ge, let_sleep):
             #
             # offline
             #
-            print("collect_data: " + str(v['state']) + " -> STATE_NOT_ONLINE")
-            return STATE_NOT_ONLINE
+            print("collect_data: " + str(v['state']) + " -> STATE_OFFLINE")
+            return STATE_OFFLINE
         else:
             #
             # asleep
             #
-            print("collect_data: " + str(v['state']) + " -> STATE_NOT_ONLINE")
-            return STATE_NOT_ONLINE
+            print("collect_data: " + str(v['state']) + " -> STATE_ASLEEP")
+            return STATE_ASLEEP
     except Exception as e:
         print("collect_data: EXCEPTION -> STATE_ERROR: " + str(e))
         return STATE_ERROR
@@ -285,7 +287,11 @@ def main_loop():
             print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False
-        elif r == STATE_NOT_ONLINE:
+        elif r == STATE_ASLEEP:
+            print("main_loop(): " + state_names[r])
+            not_charging_last_time_timer = 0
+            let_sleep = False
+        elif r == STATE_OFFLINE:
             print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False

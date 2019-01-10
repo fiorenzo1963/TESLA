@@ -34,13 +34,6 @@ class Elevation(object):
     def __get(self, latitude, longitude, headers={}):
         """Raw urlopen command"""
         req = Request("https://elevation-api.io/api/elevation?points=(%s,%s)" % (str(latitude), str(longitude)), headers=headers)
-        try:
-            req.data = urlencode(data).encode('utf-8') # Python 3
-        except:
-            try:
-                req.add_data(urlencode(data)) # Python 2
-            except:
-                pass
         opener = build_opener()
         resp = opener.open(req)
         charset = resp.info().get('charset', 'utf-8')
