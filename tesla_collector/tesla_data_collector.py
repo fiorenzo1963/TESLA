@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import teslajson
 import get_elevation
@@ -241,8 +241,8 @@ def collect_data(ge, let_sleep):
         return STATE_ERROR
 
 def main_loop():
-    # don't buffer stdout
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+    # line buffer stdout
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
     #
     ge = get_elevation.Elevation()
     not_charging_last_time_timer = 0
