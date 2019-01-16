@@ -310,14 +310,19 @@ def main_loop():
             print("main_loop(): " + state_names[r])
             not_charging_last_time_timer = 0
             let_sleep = False
+        sys.stderr.flush()
+        sys.stdout.flush()
         if (r == STATE_DRIVING) or (r == STATE_USER_PRESENT_NOT_DRIVING):
             time.sleep(SLEEP_STATE_DRIVING)
         else:
             time.sleep(SLEEP_STATE_NOT_DRIVING)
-        print("main_loop: done loop iteration, time = " + str(time.ctime()))
+        print("main_loop: done loop iteration " + str(iteration) + ", time = " + str(time.ctime()))
 
 if __name__ == "__main__":
-    pidfile = lockfile.pidlockfile("/run/lock/tesla_collector")
+    # doesn't work reliably
+    # pidfile = lockfile.pidlockfile.PIDLockFile("/run/lock/tesla_collector")
+    pidfile = None
     with daemon.DaemonContext(working_directory = "/tesla/logs", detach_process = True, stdin = None, pidfile = pidfile):
         log_redirect()
+        print("__main__(): daemonized, entering main loop")
         main_loop()
