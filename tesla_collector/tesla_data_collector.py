@@ -5,6 +5,8 @@ import get_elevation
 import os
 import sys
 import time
+import daemon
+import lockfile.pidlockfile
 
 tesla_info = {
     "id":"e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e",
@@ -240,15 +242,24 @@ def collect_data(ge, let_sleep):
         print("collect_data: EXCEPTION -> STATE_ERROR: " + str(e))
         return STATE_ERROR
 
+def log_redirect():
+    sys.stderr.flush()
+    sys.stdout.flush()
+    t = time.gmtime()
+    logfile = time.strftime("tesla_collector-%04Y-%02m-%02d.log", t)
+    sys.stdout = open(logfile, "a")
+    sys.stderr = sys.stdout
+
 def main_loop():
-    # line buffer stdout
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
     #
     ge = get_elevation.Elevation()
     not_charging_last_time_timer = 0
     let_sleep = False
     iteration = 0
     while True:
+        #
+        log_redirect()
+        #
         print("main_loop(): =======================================================================")
         iteration += 1
         r = collect_data(ge, let_sleep)
@@ -305,4 +316,8 @@ def main_loop():
             time.sleep(SLEEP_STATE_NOT_DRIVING)
         print("main_loop: done loop iteration, time = " + str(time.ctime()))
 
-main_loop()
+if __name__ == "__main__":
+    pidfile = lockfile.pidlockfile("/run/lock/tesla_collector")
+    with daemon.DaemonContext(working_directory = "/tesla/logs", detach_process = True, stdin = None, pidfile = pidfile):
+        log_redirect()
+        main_loop()
