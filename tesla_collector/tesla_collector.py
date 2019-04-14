@@ -7,6 +7,7 @@ import sys
 import time
 import daemon
 import lockfile.pidlockfile
+import json
 
 tesla_info = {
     "id":"e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e",
@@ -17,13 +18,14 @@ tesla_info = {
 
 access_token="828a2d716ba26d04c6605bb9e5f628a9ffb147f0cf3848f16f3aa94a28771a8f"
 
-token_info = {
-    "access_token":"828a2d716ba26d04c6605bb9e5f628a9ffb147f0cf3848f16f3aa94a28771a8f",
-    "token_type":"bearer",
-    "expires_in":3888000,
-    "refresh_token":"4fb4903a2eb1fb8894b6bb7e211b7f8b2fa550d7c3341237bf2dc566fbd8ef49",
-    "created_at":1554098431
-}
+#token_info = {
+#    "access_token":"828a2d716ba26d04c6605bb9e5f628a9ffb147f0cf3848f16f3aa94a28771a8f",
+#    "token_type":"bearer",
+#    "expires_in":3888000,
+#    "refresh_token":"4fb4903a2eb1fb8894b6bb7e211b7f8b2fa550d7c3341237bf2dc566fbd8ef49",
+#    "created_at":1554098431
+#}
+token_info = { }
 
 STATE_ERROR = -1
 STATE_UNKNOWN = 0
@@ -358,11 +360,19 @@ def main_loop():
             time.sleep(SLEEP_STATE_NOT_DRIVING)
         print("main_loop: done loop iteration " + str(iteration) + ", time = " + str(time.ctime()))
 
+def load_token_info():
+        fd = open("access_token.json", "r")
+        s = fd.read()
+        token_info = json.loads(s)
+        fd.close()
+        print("token_info = " + str(token_info))
+
 if __name__ == "__main__":
-    # doesn't work reliably
-    # pidfile = lockfile.pidlockfile.PIDLockFile("/run/lock/tesla_collector")
-    pidfile = None
-    with daemon.DaemonContext(working_directory = "/tesla/logs", detach_process = True, stdin = None, pidfile = pidfile):
-        log_redirect()
-        print("__main__(): daemonized, entering main loop")
-        main_loop()
+        load_token_info()
+        # doesn't work reliably
+        # pidfile = lockfile.pidlockfile.PIDLockFile("/run/lock/tesla_collector")
+        pidfile = None
+        with daemon.DaemonContext(working_directory = "/tesla/logs", detach_process = True, stdin = None, pidfile = pidfile):
+            log_redirect()
+            print("__main__(): daemonized, entering main loop")
+            main_loop()
