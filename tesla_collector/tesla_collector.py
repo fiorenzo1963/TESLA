@@ -84,6 +84,8 @@ LET_SLEEP_TIMEOUT = (60 * 15)
 
 # drive_state = {u'native_longitude': -122.12837, u'power': -9, u'timestamp': 1546588304411, u'shift_state': None, u'longitude': -122.12837, u'native_location_supported': 1, u'latitude': 47.566833, u'native_type': u'wgs', u'gps_as_of': 1546588303, u'native_latitude': 47.566833, u'speed': None, u'heading': 171}
 
+# climate_state = {'seat_heater_left': 0, 'passenger_temp_setting': 20.0, 'timestamp': 1555222736156, 'driver_temp_setting': 20.0, 'battery_heater': False, 'max_avail_temp': 28.0, 'is_front_defroster_on': False, 'battery_heater_no_power': None, 'is_preconditioning': False, 'wiper_blade_heater': False, 'seat_heater_rear_left': 0, 'inside_temp': 15.4, 'is_climate_on': False, 'side_mirror_heaters': False, 'is_auto_conditioning_on': False, 'min_avail_temp': 15.0, 'is_rear_defroster_on': False, 'right_temp_direction': 0, 'outside_temp': 15.5, 'remote_heater_control_enabled': False, 'seat_heater_rear_center': 0, 'fan_status': 0, 'smart_preconditioning': False, 'climate_keeper_mode': 'off', 'seat_heater_rear_right': 0, 'left_temp_direction': 0, 'seat_heater_right': 0}
+
 def print_state(r, v, charge_state, drive_state, vehicle_state, climate_state):
     s = "PARSE ";
     s += '\t';
