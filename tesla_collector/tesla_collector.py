@@ -9,6 +9,8 @@ import daemon
 import lockfile.pidlockfile
 import json
 
+last_logfile = ""
+
 tesla_info = {
     "id":"e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e",
     "secret":"c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220",
@@ -282,8 +284,10 @@ def log_redirect():
     sys.stdout.flush()
     t = time.gmtime()
     logfile = time.strftime("tesla_collector-%04Y-%02m-%02d.log", t)
-    sys.stdout = open(logfile, "a")
-    sys.stderr = sys.stdout
+    if logfile != last_logfile:
+        sys.stdout = open(logfile, "a")
+        sys.stderr = sys.stdout
+        os.chmod(logfile, 0o644)
 
 def main_loop():
     #
