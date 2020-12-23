@@ -3,28 +3,31 @@ source ./token.sh
 cmd=""
 case "$1" in
 "data")
+	cmd="vehicle_data" # legacy
+	;;
+"vehicle_data")
 	cmd="vehicle_data"
 	;;
-"charge")
+"service_data")
+	cmd="service_data"
+	;;
+"mobile_enabled")
+	cmd="mobile_enabled"
+	;;
+"charge_state")
 	cmd="data_request/charge_state"
-	;;
-"drive")
-	cmd="data_request/drive_state"
-	;;
-"vehicle_state")
-	cmd="data_request/vehicle_state"
-	;;
-"vehicle_config")
-	cmd="data_request/vehicle_config"
-	;;
-"gui_settings")
-	cmd="data_request/gui_settings"
 	;;
 "climate_state")
 	cmd="data_request/climate_state"
 	;;
+"drive_state")
+	cmd="data_request/drive_state"
+	;;
+"gui_settings")
+	cmd="data_request/gui_settings"
+	;;
 *)
-	echo $0: usage: $0: 'data|charge|drive|vehicle_state|vehicle_config|gui_settings|climate_state'
+	echo $0: usage: $0: 'data|vehicle_data|service_data|mobile_enabled|charge_state|climate_state|drive_state|gui_settings'
 	exit 1
 	;;
 esac
